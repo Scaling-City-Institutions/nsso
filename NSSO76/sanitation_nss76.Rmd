@@ -1,0 +1,63 @@
+---
+title: "ACCESS TO SANITATION"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(pollster)
+library(ggplot2)
+```
+
+```{r}
+#For type of latrine access - IHHL, Shared, PT/CT, No Latrines
+#For India level data, create a dummy variable overall_dummy.
+MasterFile_NSS76th %>%
+  mutate(latrine_access_recodes=case_when(latrine_access==1~"IHHL",
+                                          latrine_access %in% c(2,9)~"Shared",
+                                          latrine_access %in% c(3,4)~"PT/CT",
+                                          latrine_access==5~"No Latrine"),
+         overall_dummy="India")%>%
+  crosstab(x=overall_dummy,y=latrine_access_recodes,weight = multiplier/100)
+```
+```{r}
+#Latrine type among those with a toilet
+MasterFile_NSS76th %>%
+  mutate(latrine_type_recoded = case_when(latrine_type==1~"Sewer",
+                                           latrine_type==2~"Septic",
+                                           latrine_type %in% c(3,4,5,6,7,8)~"Pit",
+                                           latrine_type %in% c(10,19)~"Others",
+                                           latrine_type==11~"Not Used"))%>%
+  crosstab(x=sector,y=latrine_type_recoded,weight = multiplier/100)
+```
+
+
+```{r}
+#crosstab type of latrines and access
+MasterFile_NSS76th %>%
+  mutate(latrine_access_recodes=case_when(latrine_access==1~"IHHL",
+                                          latrine_access %in% c(2,9)~"Shared",
+                                          latrine_access %in% c(3,4)~"PT/CT",
+                                          latrine_access==5~"No Latrine"),
+         latrine_type_recoded = case_when(latrine_type==1~"Sewer",
+                                           latrine_type==2~"Septic",
+                                           latrine_type %in% c(3,4,5,6,7,8)~"Pit",
+                                           latrine_type %in% c(10,19)~"Others",
+                                           latrine_type==11~"Not Used"))%>%
+  crosstab_3way(x=sector,z=latrine_access_recodes,y=latrine_type_recoded,weight=multiplier)
+```
+
+```{r}
+#Latrine Usage: IHHL, Shared, and OD
+MasterFile_NSS76th %>%
+  mutate(latrine_access_recodes=case_when(latrine_access==1 & latrine_type!=11~"IHHL",
+                                          latrine_access %in% c(2,9,3,4) & latrine_type!=11~"Shared",
+                                          latrine_type==11 | is.na(latrine_type)~"OD"))%>%
+  crosstab(x=sector,y=latrine_access_recodes,weight = multiplier/100)
+```
+
